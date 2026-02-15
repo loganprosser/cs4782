@@ -49,7 +49,9 @@ def train(model, data_loader, val_data_loader, criterion, optimizer, epochs, dev
     for epoch in range(epochs):
         # TODO: write a training loop
         
+        
         model.train()
+        running_loss = 0.0
         
         for inputs, labels in data_loader:
             inputs, labels = inputs.to(device), labels.to(device)
@@ -63,9 +65,11 @@ def train(model, data_loader, val_data_loader, criterion, optimizer, epochs, dev
         
         epoch_loss = running_loss / len(data_loader)
         train_loss_arr.append(epoch_loss)
+
         
         val_loss = val(model, val_data_loader, criterion, device)
         val_loss_arr.append(val_loss)
+
         
         print(f"Epoch {epoch+1}/{epochs}, Training Loss: {epoch_loss:.4f}, Validation Loss: {val_loss:.4f}")
 
@@ -323,6 +327,7 @@ class CustomDropout(nn.Module):
             # TODO maybe use this insetad of buitl in function
             mask = (torch.rand_like(x) > self.p).float()
             x = (x * mask) / (1 - self.p)
+
             
             # END TODO
             pass
@@ -473,10 +478,10 @@ class ResNet(nn.Module):
         
         layers = []
         
-        layers.append(ResidualBlock(in_channel, out_channel, out_channel)) # first block with stride 2 to downsample
+        layers.append(ResidualBlock(in_channel, out_channel, out_channel, stride=2)) # first block with stride 2 to downsample
         
         for _ in range(num_blocks - 1):
-            layers.append(ResidualBlock(out_channel, out_channel, out_channel, stride=2)) # subsequent blocks with stride 1
+            layers.append(ResidualBlock(out_channel, out_channel, out_channel)) # subsequent blocks with stride 1
         
         return nn.Sequential(*layers)
         #self.blocklayer = ResidualBlock(num_blocks, in_channel, out_channel)

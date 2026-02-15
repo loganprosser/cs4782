@@ -15,6 +15,9 @@
 \usepackage{tkz-euclide}
 \usepackage{comment}
 
+\usepackage{graphicx}
+
+
 \usepackage[T1]{fontenc}
 % \usepackage{palatino}
 \usepackage{libertine, libertinust1math}
@@ -25,6 +28,8 @@
 \renewcommand{\familydefault}{\sfdefault}
 \renewcommand{\sfdefault}{LinuxLibertineT-TLF}
 
+\graphicspath{{./learningrates/}}
+\graphicspath{{./modelstest/}}
 
 % For environments and alias
 \usepackage{amsthm}
@@ -91,12 +96,32 @@
 \section*{Problem 1:}
 
 Note down anything you have observed from your experiment with learning rates (one or two sentences will suffice). Include an image of the plots being referenced in this question. 
+\vspace{5pt}
+
+\textbf{Answer:} From the experiment, very high learning rates (i.e. 1) led to unstable training and divergence in validation loss, while very low learning rates (e.g., 1e-5) resulted in slow or ineffective learning. Moderate learning rates around 1e-3 to 1e-2 produced the most stable convergence and lowest validation loss for the ConvNet during training.
 
 
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.75\linewidth]{learningrates.png}
+    \label{fig:my_image_label}
+\end{figure}
+\newpage{}
 \section*{Problem 2:}
 
-
 What do you notice about the loss graphs and the differences between the five models you have implemented? Write 2-3 sentences. Include an image of the plots referenced in this question.
+
+\vspace{5pt}
+
+\textbf{Answer:} From the loss graphs, the baseline ConvNetDropout shows relatively higher training and validation loss compared to the other architectures. This indicates that it has the worst generalizatoin. Models incorporating Batch Normalization and residual connections (ConvNetBN and ResNet) converge much faster and achieve similar validation loss, though ResNet seems to have the most stable and lowest loss overall. 
+
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.75\linewidth]{modelstest.png}
+    \label{fig:my_image_label}
+\end{figure}
 
 
 \end{document}
