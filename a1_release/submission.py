@@ -368,16 +368,14 @@ class ConvNetDropout(nn.Module):
         # TODO: create a convnet forward pass
         
         x = F.relu(self.bn1(self.conv1(x)))
-        x = self.pool1(x)
-        x = self.drop1(x)
+
+        x = self.pool1(self.drop1(x))
         
         x = F.relu(self.bn2(self.conv2(x)))
-        x = self.pool2(x)
-        x = self.drop2(x)
+        x = self.pool2(self.drop2(x))
         
         x = F.relu(self.bn3(self.conv3(x)))
-        x = self.pool3(x)
-        x = self.drop3(x)
+        x = self.pool3(self.drop3(x))
         
         x = torch.flatten(x, start_dim=1)
         x = F.relu(self.fc1(x))
@@ -478,7 +476,7 @@ class ResNet(nn.Module):
         
         layers = []
         
-        layers.append(ResidualBlock(in_channel, out_channel, out_channel, stride=2)) # first block with stride 2 to downsample
+        layers.append(ResidualBlock(in_channel, out_channel, out_channel, stride=2)) 
         
         for _ in range(num_blocks - 1):
             layers.append(ResidualBlock(out_channel, out_channel, out_channel)) # subsequent blocks with stride 1
