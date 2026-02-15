@@ -48,7 +48,21 @@ def train(model, data_loader, val_data_loader, criterion, optimizer, epochs, dev
 
     for epoch in range(epochs):
         # TODO: write a training loop
-        pass
+        model.zero_grad()
+        
+        for (inputs, labels) in data_loader:
+            inputs, labels = inputs.to(device), labels.to(device)
+            outputs = model(inputs)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
+            
+            running_loss += loss.item()
+            train_loss_arr.append(running_loss/len(data_loader))
+            val_loss_arr.append(val(model, val_data_loader, criterion, device))
+            
+
+        #pass
         # END TODO
 
     print("Training finished.")
@@ -72,10 +86,49 @@ class ConvNet(nn.Module):
     def __init__(self, num_classes=4):
         super(ConvNet, self).__init__()
         # TODO: define the network
+        
+        self.conv1 = nn.Conv2d(in_channels=3, out_channels=4, kernel_size=3, stride=2, padding=1)
+
+        self.conv2 = nn.Conv2d(in_channels=4, out_channels=16, kernel_size=3, stride=2, padding=1)
+
+        self.conv3 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, stride=2, padding=1)
+
+        self.fc1 = nn.LazyLinear(out_features=1024) # lazy linear layer to avoid calculating in_features
+        
+        self.fc2 = nn.Linear(in_features=1024, out_features=num_classes) # should be 4 out features
+        
+        
+        #layers = [conv1d, ReLU1, conv2d, ReLU2, conv3d, ReLU3, fc1, ReLU4, fc2]
+        #self.net = nn.Sequential(*layers) # i think can work here to make pass easier
         # END TODO
 
     def forward(self, x):
         # TODO: create a convnet forward pass
+        
+        N, C, H, W = x.shape
+        
+        x = x.view(N, C, H*W) # reshape to (N, C, H*W) for conv1d
+        
+        x = F.relu(self.conv1d(x))
+    
+        N, C1, L1 = x.shape
+        
+        W1 = (W+1) // 2 # width after stride 2
+        
+        H1 = L1 // W1
+        
+        x = x.view(N, C1, H1, W1) # reshape back to (N, C, W, H//W) for conv2d 
+
+        x = F.relu(self.conv2d(x))
+        
+        x = F.relu(self.conv3d(x))
+        
+        x = torch.flatten(x, start_dim=1) # flatten all dimensions except batch dimension
+        
+        x = F.relu(self.fc1(x))
+        
+        x = self.fc2(x)
+        
         # END TODO
 
         return x
@@ -88,10 +141,53 @@ class ConvNetMaxPooling(nn.Module):
     def __init__(self, num_classes=4):
         super(ConvNetMaxPooling, self).__init__()
         # TODO: define network
+        
+        self.conv1d = nn.Conv1d(in_channels=3, out_channels=4, kernel_size=3, stride=2, padding=1)
+        self.pool1 = nn.MaxPool2d(kernel_size=2, stride=2)
+        
+        self.conv2d = nn.Conv2d(in_channels=4, out_channels=16, kernel_size=3, stride=2, padding=1)
+        self.pool2 = nn.MaxPool2d(kernel_size=2, stride=2)
+        
+        self.conv3d = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, stride=2, padding=1)
+        self.pool3 = nn.MaxPool2d(kernel_size=2, stride=2)
+        
+        self.fc1 = nn.LazyLinear(out_features=1024) # lazy linear layer to avoid calculating in_features
+        
+        self.fc2 = nn.Linear(in_features=1024, out_features=num_classes) # should be 4 out features
+        
         # END TODO
 
     def forward(self, x):
         # TODO: create a convnet forward pass
+        
+        N, C, H, W = x.shape
+        
+        x = x.view(N, C, H*W) # reshape to (N, C, H*W) for conv1d
+        
+        x = F.relu(self.conv1d(x))
+    
+        N, C1, L1 = x.shape
+        
+        W1 = (W+1) // 2 # width after stride 2
+        
+        H1 = L1 // W1
+        
+        x = x.view(N, C1, H1, W1) # reshape back to (N, C, W, H//W) for conv2d 
+
+        x = self.pool1(x)
+
+        x = F.relu(self.conv2d(x))
+        x = self.pool2(x)
+        
+        x = F.relu(self.conv3d(x))
+        x = self.pool3(x)
+        
+        x = torch.flatten(x, start_dim=1) # flatten all dimensions except batch dimension
+        
+        x = F.relu(self.fc1(x))
+        
+        x = self.fc2(x)
+        
         # END TODO
         return x
 
@@ -141,11 +237,29 @@ class BatchNormalization(nn.Module):
         # The mean and variance vector should be of shape (1, C, 1, 1)
         if self.training:
             # TODO: Implement the logic for training
-            pass
+
+            mu = x.mean(dim=[0,2,3], keepdim=True) # mean over batch and spatial dimensions
+            var = x.var(dim=[0,2,3], keepdim=True, unbiased=False)
+            
+            x_hat = (x - mu) / torch.sqrt(var + self.eps)
+            
+            with torch.no_grad():
+                self.running_mean = (1 - self.momentum) * self.running_mean + self.momentum * mu.squeeze()
+                self.running_var = (1 - self.momentum) * self.running_var + self.momentum * var.squeeze()
+            
+            x = self.weights.view(1, self.num_features, 1, 1) * x_hat + self.bias.view(1, self.num_features, 1, 1)
             # END TODO
         else:
             # TODO: Implement the logic for inference
-            pass
+            
+            mu = self.running_mean.view(1, self.num_features, 1, 1)
+            var = self.running_var.view(1, self.num_features, 1, 1)
+            
+            x_hat = (x - mu) / torch.sqrt(var + self.eps)
+            
+            x = self.weights.view(1, self.num_features, 1, 1) * x_hat + self.bias.view(1, self.num_features, 1, 1)
+            
+            # should write better code but i think it grades between TODO loops not sure?
             # END TODO
         return x
 
@@ -153,15 +267,61 @@ class BatchNormalization(nn.Module):
 class ConvNetBN(nn.Module):
     """
     Same as ConvNetMaxPooling but with BatchNormalization layers after each convolution.
+    
+    conv -> batch norm -> ReLU -> max pool!
+    
     """
 
     def __init__(self, num_classes=4):
         super(ConvNetBN, self).__init__()
         # TODO: define network
+        self.conv1d = nn.Conv1d(in_channels=3, out_channels=4, kernel_size=3, stride=2, padding=1)
+        self.bn1 = BatchNormalization(num_features=4)
+        self.pool1 = nn.MaxPool2d(kernel_size=2, stride=2)
+        
+        self.conv2d = nn.Conv2d(in_channels=4, out_channels=16, kernel_size=3, stride=2, padding=1)
+        self.bn2 = BatchNormalization(num_features=16)
+        self.pool2 = nn.MaxPool2d(kernel_size=2, stride=2)
+        
+        self.conv3d = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, stride=2, padding=1)
+        self.bn3 = BatchNormalization(num_features=32)
+        self.pool3 = nn.MaxPool2d(kernel_size=2, stride=2)
+        
+        self.fc1 = nn.LazyLinear(out_features=1024) # lazy linear layer to avoid calculating in_features
+        
+        self.fc2 = nn.Linear(in_features=1024, out_features=num_classes) # should be 4 out features
         # END TODO
 
     def forward(self, x):
         # TODO: create a convnet forward pass
+        N, C, H, W = x.shape
+        
+        x = x.view(N, C, H*W) # reshape to (N, C, H*W) for conv1d
+        
+        x = F.relu(self.bn1(self.conv1d(x)))
+    
+        N, C1, L1 = x.shape
+        
+        W1 = (W+1) // 2 # width after stride 2
+        
+        H1 = L1 // W1
+        
+        x = x.view(N, C1, H1, W1) # reshape back to (N, C, W, H//W) for conv2d 
+
+        x = self.pool1(x)
+
+        x = F.relu(self.bn2(self.conv2d(x)))
+        x = self.pool2(x)
+        
+        x = F.relu(self.bn3(self.conv3d(x)))
+        x = self.pool3(x)
+        
+        x = torch.flatten(x, start_dim=1) # flatten all dimensions except batch dimension
+        
+        x = F.relu(self.fc1(x))
+        
+        x = self.fc2(x)
+        
         # END TODO
         return x
 
@@ -194,12 +354,17 @@ class CustomDropout(nn.Module):
         """
         if self.training:
             # TODO: Implement the training behavior of dropout.
+            x = F.dropout(x, p=self.p, training=True)
+            
+            # mask = (torch.rand_like(x) > self.p).float()
+            # x = (x * mask) / (1 - self.p)
+            
             # END TODO
             pass
         else:
             # TODO: Implement the inference behavior of dropout.
-            # END TODO
             pass
+            # END TODO
         return x
 
 
@@ -207,12 +372,62 @@ class ConvNetDropout(nn.Module):
     def __init__(self, num_classes=4):
         super(ConvNetDropout, self).__init__()
         # TODO: define network
+        
+        self.conv1d = nn.Conv1d(in_channels=3, out_channels=4, kernel_size=3, stride=2, padding=1)
+        self.bn1 = BatchNormalization(num_features=4)
+        self.pool1 = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.drop1 = CustomDropout(p=0.5)
+        
+        self.conv2d = nn.Conv2d(in_channels=4, out_channels=16, kernel_size=3, stride=2, padding=1)
+        self.bn2 = BatchNormalization(num_features=16)
+        self.pool2 = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.drop2 = CustomDropout(p=0.5)
+        
+        self.conv3d = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, stride=2, padding=1)
+        self.bn3 = BatchNormalization(num_features=32)
+        self.pool3 = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.drop3 = CustomDropout(p=0.5)
+        
+        self.fc1 = nn.LazyLinear(out_features=1024) # lazy linear layer to avoid calculating in_features
+        self.drop4 = CustomDropout(p=0.5)
+        
+        self.fc2 = nn.Linear(in_features=1024, out_features=num_classes) # should be 4 out features
         # END TODO
 
     def forward(self, x):
         # TODO: create a convnet forward pass
+        N, C, H, W = x.shape
+        
+        x = x.view(N, C, H*W) # reshape to (N, C, H*W) for conv1d
+        
+        x = F.relu(self.bn1(self.conv1d(x)))
+        x = self.drop1(x)
+    
+        N, C1, L1 = x.shape
+        
+        W1 = (W+1) // 2 # width after stride 2
+        
+        H1 = L1 // W1
+        
+        x = x.view(N, C1, H1, W1) # reshape back to (N, C, W, H//W) for conv2d 
+
+        x = self.pool1(x)
+
+        x = F.relu(self.bn2(self.conv2d(x)))
+        x = self.drop2(x)
+        x = self.pool2(x)
+        
+        x = F.relu(self.bn3(self.conv3d(x)))
+        x = self.drop3(x)
+        x = self.pool3(x)
+        
+        x = torch.flatten(x, start_dim=1) # flatten all dimensions except batch dimension
+        
+        x = F.relu(self.fc1(x))
+        x = self.drop4(x)
+        
+        x = self.fc2(x)
         # END TODO
-        pass
         return x
 
 
@@ -231,13 +446,30 @@ class ResidualBlock(nn.Module):
         # 2 batch normalization layers: named bn1, bn2
 
         # TODO: initialize a residual block with the layers specified above
+        
+        self.conv1 = nn.Conv2d(in_channels=in_channel, out_channels=interm_channel, kernel_size=3, stride=stride, padding=1)
+        self.bn1 = nn.BatchNorm2d(num_features=interm_channel)
+        
+        self.conv2 = nn.Conv2d(in_channels=interm_channel, out_channels=out_channel, kernel_size=3, stride=stride, padding=1)
+        self.bn2 = nn.BatchNorm2d(num_features=out_channel)
+        
+        self.conv3 = nn.Conv2d(in_channels=in_channel, out_channels=out_channel, kernel_size=1, stride=stride, padding=0)
         # END TODO
-        pass
 
     def forward(self, x):
         # TODO: implement the forward function based on the architecture above
+        
+        elementwise = self.conv3(x) # skip connection
+        
+        x = F.relu(self.bn1(self.conv1(x)))
+        x = F.relu(self.bn2(self.conv2(x)))
+        x = elementwise + x # skip connection
+        
+        x = F.relu(x)
+        
+        return x
+        
         # END TODO
-        pass
 
 
 class ResNet(nn.Module):
@@ -267,6 +499,10 @@ class ResNet(nn.Module):
         # initialize two layers called layer1 and layer2 with num_blocks residual blocks each.
 
         # TODO: (important!) implement the block layer function below before this part
+        
+        self.layer1 = self.block_layer(num_blocks, layer1_channel, layer2_channel)
+        self.layer2 = self.block_layer(num_blocks, layer2_channel, out_channel)
+        
         # END TODO
 
     def block_layer(self, num_blocks, in_channel, out_channel):
@@ -280,10 +516,28 @@ class ResNet(nn.Module):
         # again, note interm_channel == out_channel for all residual blocks here
 
         # TODO: implement the block layer which has num_blocks blocks stacked together
+        
+        layers = []
+        
+        layers.append(ResidualBlock(in_channel, out_channel, out_channel)) # first block with stride 2 to downsample
+        
+        for _ in range(num_blocks - 1):
+            layers.append(ResidualBlock(out_channel, out_channel, out_channel)) # subsequent blocks with stride 1
+        
+        return nn.Sequential(*layers)
+        #self.blocklayer = ResidualBlock(num_blocks, in_channel, out_channel)
+        
         # END TODO
-        pass
+
 
     def forward(self, x):
         # TODO: implement the forward function based on the architecture described above
+        
+        x = self.first(x)
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.last(x)
+        
+        return x
+        
         # END TODO
-        pass
