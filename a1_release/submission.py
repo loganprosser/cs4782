@@ -103,7 +103,18 @@ class ConvNet(nn.Module):
 
         self.conv3 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, stride=2, padding=1)
 
-        self.fc1 = nn.LazyLinear(out_features=1024) # lazy linear layer to avoid calculating in_features
+        #self.fc1 = nn.LazyLinear(out_features=1024) # lazy linear layer to avoid calculating in_features
+        
+        with torch.no_grad():
+            dummy = torch.zeros(1, 3, 64, 64)
+            out = self.conv1(dummy)
+            out = self.conv2(out)
+            out = self.conv3(out)
+            out_flat = out.flatten(start_dim=1)
+            fc1_in_features = out_flat.shape[1]
+        
+        
+        self.fc1 = nn.Linear(fc1_in_features, 1024) 
         
         self.fc2 = nn.Linear(in_features=1024, out_features=num_classes) # should be 4 out features
         
@@ -146,7 +157,15 @@ class ConvNetMaxPooling(nn.Module):
         self.conv3 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, stride=2, padding=1)
         self.pool3 = nn.MaxPool2d(kernel_size=2, stride=2)
         
-        self.fc1 = nn.LazyLinear(out_features=1024) # lazy linear layer to avoid calculating in_features
+        #self.fc1 = nn.LazyLinear(out_features=1024) # lazy linear layer to avoid calculating in_features
+        with torch.no_grad():
+            dummy = torch.zeros(1, 3, 64, 64)
+            out = self.pool1(F.relu(self.conv1(dummy)))
+            out = self.pool2(F.relu(self.conv2(out)))
+            out = self.pool3(F.relu(self.conv3(out)))
+            fc1_in_features = out.flatten(1).shape[1]
+        
+        self.fc1 = nn.Linear(fc1_in_features, 1024) 
         
         self.fc2 = nn.Linear(in_features=1024, out_features=num_classes) # should be 4 out features
         
@@ -269,7 +288,17 @@ class ConvNetBN(nn.Module):
         self.bn3 = BatchNormalization(num_features=32)
         self.pool3 = nn.MaxPool2d(kernel_size=2, stride=2)
         
-        self.fc1 = nn.LazyLinear(out_features=1024) # lazy linear layer to avoid calculating in_features
+        #self.fc1 = nn.LazyLinear(out_features=1024) # lazy linear layer to avoid calculating in_features
+        with torch.no_grad():
+            dummy = torch.zeros(1, 3, 64, 64)
+            out = self.pool1(F.relu(self.bn1(self.conv1(dummy))))
+            out = self.pool2(F.relu(self.bn2(self.conv2(out))))
+            out = self.pool3(F.relu(self.bn3(self.conv3(out))))
+            fc1_in_features = out.flatten(1).shape[1]
+
+        
+        
+        self.fc1 = nn.Linear(fc1_in_features, 1024) 
         self.fc2 = nn.Linear(in_features=1024, out_features=num_classes) # should be 4 out features
         # END TODO
 
@@ -358,7 +387,22 @@ class ConvNetDropout(nn.Module):
         self.pool3 = nn.MaxPool2d(kernel_size=2, stride=2)
         self.drop3 = CustomDropout(p=0.5)
         
-        self.fc1 = nn.LazyLinear(out_features=1024) # lazy linear layer to avoid calculating in_features
+        #self.fc1 = nn.LazyLinear(out_features=1024) # lazy linear layer to avoid calculating in_features
+        with torch.no_grad():
+            dummy = torch.zeros(1, 3, 64, 64)
+            out = F.relu(self.bn1(self.conv1(dummy)))
+            out = self.pool1(self.drop1(out))
+
+            out = F.relu(self.bn2(self.conv2(out)))
+            out = self.pool2(self.drop2(out))
+
+            out = F.relu(self.bn3(self.conv3(out)))
+            out = self.pool3(self.drop3(out))
+
+            fc1_in_features = out.flatten(1).shape[1]
+
+        
+        self.fc1 = nn.Linear(fc1_in_features, 1024)  
         self.drop4 = CustomDropout(p=0.5)
         
         self.fc2 = nn.Linear(in_features=1024, out_features=num_classes) # should be 4 out features
