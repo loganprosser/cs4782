@@ -1,0 +1,113 @@
+\documentclass{article}
+\usepackage{amsmath, amssymb, amsfonts}
+\usepackage{fullpage}
+\usepackage{enumerate}
+\usepackage[linesnumbered,ruled,vlined]{algorithm2e}
+\usepackage[usenames,dvipsnames]{xcolor}
+\usepackage[colorlinks,allcolors=RoyalBlue]{hyperref}
+\usepackage{enumitem}
+\usepackage{graphicx} % Required for inserting images
+\usepackage[margin=1in]{geometry}
+\usepackage{xcolor}
+\usepackage{amsmath}
+\usepackage{tikz}
+\usepackage{tkz-base}
+\usepackage{tkz-euclide}
+\usepackage{comment}
+
+\usepackage[T1]{fontenc}
+% \usepackage{palatino}
+\usepackage{libertine, libertinust1math}
+\usepackage{titlesec}
+% \usepackage{newtxtext,newtxmath}
+% \usepackage{kpfonts}
+
+\renewcommand{\familydefault}{\sfdefault}
+\renewcommand{\sfdefault}{LinuxLibertineT-TLF}
+
+
+% For environments and alias
+\usepackage{amsthm}
+\usepackage{mdframed}
+\usepackage{mathtools}
+\usepackage{cleveref}
+\newmdtheoremenv{assumption}{Assumption}
+
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\newcommand{\loss}[1]{\mathcal{L}_\text{#1}}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\F}{\mathbb{F}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\cO}{\mathcal{O}}
+\newcommand{\ctO}{\Tilde{\cO}}
+\newcommand{\mdot}{\:\cdot\:}
+\newcommand{\jacf}{\nabla f}
+\newcommand{\hesf}{\nabla^2 f}
+
+\newcommand{\x}{\mathbf{x}}
+\newcommand{\y}{\mathbf{y}}
+\newcommand{\w}{\mathbf{w}}
+
+\DeclarePairedDelimiter{\norm}{\lVert}{\rVert}
+\DeclarePairedDelimiterX{\inner}[2]{\langle}{\rangle}{#1,#2}
+\DeclarePairedDelimiter{\Set}{\lbrace}{\rbrace}
+\DeclarePairedDelimiter{\abs}{|}{|}
+\DeclarePairedDelimiter{\ceil}{\lceil}{\rceil}
+\DeclarePairedDelimiter{\floor}{\lfloor}{\rfloor}
+\DeclarePairedDelimiter{\paren}{(}{)}
+\DeclarePairedDelimiter{\bracket}{[}{]}
+\DeclarePairedDelimiter{\curly}{\lbrace}{\rbrace}
+\DeclarePairedDelimiter{\card}{|}{|}
+\DeclarePairedDelimiter{\norms}{\lVert}{\rVert^2}
+\DeclarePairedDelimiter{\fnorm}{\lVert}{\rVert_F}
+\DeclarePairedDelimiter{\infnorm}{\lVert}{\rVert_\infty}
+
+\newcommand{\mincurly}[1]{\min\curly*{#1}}
+\newcommand{\maxcurly}[1]{\max\curly*{#1}}
+\newcommand{\Exv}[1]{\E\bracket*{#1}}
+\newcommand{\bigO}[1]{\cO\paren*{#1}}
+\newcommand{\bigtO}[1]{\ctO\paren*{#1}}
+\newcommand{\prob}[1]{P\paren*{#1}}
+\newcommand{\condprob}[2]{P\paren*{#1\mid#2}}
+
+\newenvironment{solution}{
+    \color{Red}
+    \textbf{Solution:}
+}
+
+\title{CS 4782 Coding Assignment 2 Written Responses\vspace{-10pt}}
+\author{Due: 3/6/25 11:59 PM on Gradescope}
+\date{Late submissions accepted until 3/8/25 11:59 PM}
+
+\begin{document}
+    \maketitle
+    \textbf{Note: For homework, you can work in teams of up to 2 people. Please include your teammates’ NetIDs and names on the front page and form a group on Gradescope. (Please answer all questions within each paragraph.) Please show all the relevant steps in your solutions. }
+\maketitle
+\section*{Question 1:}
+
+Based on the provided implementation of \textit{PositionalEncoding}, what is the formula used to assign an embedding to each position/index $i$ in the input sequence? What is one benefit of using this function/formula specifically to generate position embeddings? 
+
+
+\section*{Question 2:}
+
+Describe the matrix size transformations as they happen from steps 1-5. Specificaly, what is the shape of: 
+\begin{enumerate}
+    \item the input to the \textbf{split heads} function? 
+    \item the output from the \textbf{split heads} function?
+    \item \textbf{multi-head} variable in the description above?
+    \item final output of \textbf{Multi-Head(Q, K, V)}?
+\end{enumerate}
+
+Answers expected as matrix shapes in terms of $n$, $d_{model}$, $d_q$, $d_k$, $d_v$ and $h$. You can use the additional variable $b$ to represent batch size.
+
+
+\section*{Question 3:}
+
+What do you notice about the graph above and the differences between the five models you have implemented? Are the results consistent with what you expected? How do pre-trained models compare to models you trained from scratch? Write 3-4 sentences below.
+
+\end{document}
