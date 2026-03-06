@@ -41,6 +41,7 @@ def get_reviews_embeddings(model, data):
     """
     reviews_embeddings = []
     ## TODO 2: implement function
+    
     #################
 
     return reviews_embeddings
