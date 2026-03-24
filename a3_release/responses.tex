@@ -92,9 +92,12 @@
 
 How do the performances of the two models you just trained compare? What do you think might contribute to the differences you noticed? Write 2-3 sentences.
 
+\textcolor{Red}{The model trained with SimCLR performed better on the classification task than the one trained with triplet loss. This is probably because SimCLR compares each image to many other examples in the batch, so it gets more useful feedback during training. Triplet loss relies on specific sampled pairs and a margin choice, so if those samples are not very informative, the features it learns can be less consistent.}
 
 \section*{Question 2:}
 
 How do the visualizations of the contrastive learning features compare to the visualization of the image pixels? How tightly clustered are the points for the different classes in each of the two visualizations? How might your observations relate to the utility of these two sets of features for image classification? Write 3-4 sentences.
+
+\textcolor{Red}{The contrastive feature plot shows points from the same class grouping pretty tightly, and the different classes are more separated. The pixel plot looks much messier, with a lot more overlap and no clear structure. This tells me the learned features are actually organizing the data in a way that matches the labels, while raw pixels are not. Because of that, the contrastive features are much easier to use for classification.}
 
 \end{document}

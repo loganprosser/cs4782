@@ -45,7 +45,19 @@ def triplet_loss(queries, keys, margin=1.0):
     # Hint: How might you use matrices/matrix operations to keep track of distances between
     #       positive and negative pairs? (looking ahead to the instructions in part 1.2 maybe be useful)
     #################
-    loss = None
+
+    queries = F.normalize(queries, p=2, dim=1)
+    keys = F.normalize(keys, p=2, dim=1)
+
+    sims = torch.matmul(queries, keys.T) 
+
+    pos_sims = torch.diag(sims).unsqueeze(1) 
+
+    losses = F.relu(sims - pos_sims + margin)
+
+    mask = ~torch.eye(b, dtype=torch.bool, device=device)
+
+    loss = losses[mask].mean()
 
     return loss
 
@@ -69,11 +81,26 @@ def nt_xent_loss(queries, keys, temperature=0.1):
     #       location (device) your model and data are on.
     # Hint: Which loss function does the first equation in step 3 remind you of?
     #################
-    loss = None
+    
+    queries = F.normalize(queries, p=2, dim=1)
+    keys = F.normalize(keys, p=2, dim=1)
 
+    reps = torch.cat([queries, keys], dim=0)
+
+    sim = reps @ reps.T 
+
+    logits = sim / temperature
+    mask = torch.eye(n, dtype=torch.bool, device=device)
+    logits = logits.masked_fill(mask, float('-inf'))
+
+    targets = torch.cat([
+        torch.arange(b, 2 * b, device=device),
+        torch.arange(0, b, device=device)
+    ], dim=0)
+
+    loss = F.cross_entropy(logits, targets)
     return loss
-
-
+    
 class ViT(nn.Module):
     def __init__(self, d_model, num_layers, patch_size=4, img_side_length=32, p=0.05):
         """
@@ -91,6 +118,43 @@ class ViT(nn.Module):
 
         # TODO3: define the ViT
         #################
+        channels = 3
+        patch_dim = channels * patch_size * patch_size
+        num_patches_per_side = img_side_length // patch_size
+
+        self.to_patch_embedding = nn.Sequential(
+            Rearrange(
+                'b c (h p1) (w p2) -> b (h w) (c p1 p2)',
+                p1=patch_size,
+                p2=patch_size
+            ),
+            nn.Linear(patch_dim, d_model)
+        )
+
+        self.pos_embedding = posemb_sincos_2d(
+            h=num_patches_per_side,
+            w=num_patches_per_side,
+            dim=d_model
+        )
+
+        self.dropout = nn.Dropout(p)
+
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=d_model,
+            nhead=num_heads,
+            dim_feedforward=d_ff,
+            dropout=p,
+            batch_first=True
+        )
+        self.encoder = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
+
+        self.output_ln = nn.LayerNorm(d_model)
+
+        self.projection_head = nn.Sequential(
+            nn.Linear(d_model, d_model),
+            nn.SiLU(),
+            nn.Linear(d_model, d_model)
+        )
 
         ################
 
@@ -98,7 +162,16 @@ class ViT(nn.Module):
 
         ## TODO4: Write the forward pass for the ViT
         #################
+        x = self.to_patch_embedding(x)
+        pos = self.pos_embedding.to(x.device).unsqueeze(0)
+        x = x + pos
+        x = self.dropout(x)
 
+        x = self.encoder(x)
+        x = self.output_ln(x)
+        x = x.mean(dim=1) 
+
+        if return_embedding:
+            return x
+        return self.projection_head(x)
         #################
-
-        return output
