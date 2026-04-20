@@ -118,33 +118,33 @@ class ViT(nn.Module):
 
         # TODO3: define the ViT
         #################
-        channels = 3
-        patch_dim = channels * patch_size * patch_size
-        num_patches_per_side = img_side_length // patch_size
+        
+        channels = 3 * patch_size * patch_size
+        patch_h = img_side_length // patch_size
+        patch_w = img_side_length // patch_size
 
         self.to_patch_embedding = nn.Sequential(
             Rearrange(
-                'b c (h p1) (w p2) -> b (h w) (c p1 p2)',
+                "b c (h p1) (w p2) -> b (h w) (p1 p2 c)",
                 p1=patch_size,
-                p2=patch_size
+                p2=patch_size,
             ),
-            nn.Linear(patch_dim, d_model)
+            nn.LayerNorm(channels),
+            nn.Linear(channels, d_model),
+            nn.LayerNorm(d_model),
         )
 
-        self.pos_embedding = posemb_sincos_2d(
-            h=num_patches_per_side,
-            w=num_patches_per_side,
-            dim=d_model
+        self.register_buffer(
+            "pos_embedding",
+            posemb_sincos_2d(patch_h, patch_w, d_model),
         )
 
         self.dropout = nn.Dropout(p)
-
         encoder_layer = nn.TransformerEncoderLayer(
             d_model=d_model,
             nhead=num_heads,
             dim_feedforward=d_ff,
             dropout=p,
-            batch_first=True
         )
         self.encoder = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
 
@@ -152,10 +152,9 @@ class ViT(nn.Module):
 
         self.projection_head = nn.Sequential(
             nn.Linear(d_model, d_model),
-            nn.SiLU(),
-            nn.Linear(d_model, d_model)
+            nn.SiLU(),   # if this still fails, try nn.ReLU()
+            nn.Linear(d_model, d_model),
         )
-
         ################
 
     def forward(self, x, return_embedding=False):
@@ -163,13 +162,15 @@ class ViT(nn.Module):
         ## TODO4: Write the forward pass for the ViT
         #################
         x = self.to_patch_embedding(x)
-        pos = self.pos_embedding.to(x.device).unsqueeze(0)
-        x = x + pos
+        x = x + self.pos_embedding.unsqueeze(0)
         x = self.dropout(x)
 
+        x = x.transpose(0, 1)
         x = self.encoder(x)
+        x = x.transpose(0, 1)
+
+        x = x.mean(dim=1)
         x = self.output_ln(x)
-        x = x.mean(dim=1) 
 
         if return_embedding:
             return x
