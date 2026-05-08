@@ -92,13 +92,25 @@
 \section*{Question 1:}
 How does the behavior of the Q-Learning agent compare to the random policy visualized previously? What policy does the agent appear to have learned? Write 2-3 sentences below. (5 pts)
 
+\begin{solution}
+Compared with the random taxi policy, the Q Learning agent moves much more purposefully and avoids many illegal pickup or dropoff actions. It appears to have learned to drive to the passenger, pick them up, go to the destination, and drop them off.
+\end{solution}
+
 
 \section*{Question 2:}
 How does the behavior of the DQN agent compare to the random policy visualized previously? What policy does the DQN agent appear to have learned? Write 2-3 sentences below. (5 pts)
 
+\begin{solution}
+Compared with the random CartPole policy, the DQN agent keeps the pole balanced for much longer and reacts to the pole angle and cart velocity. It sems to have learned a stabilizing policy that moves the cart under the pole before it falls.
+\end{solution}
+
 
 \section*{Question 3:}
 Compare your results for using DQN and Reinforce. Discuss the performance, convergence, and behavior of the two algorithms. Consider factors such as the stability of learning, the quality of the learned policies, and the behavior of the final policy. Write 3-5 sentences below. (5 pts)
+
+\begin{solution}
+DQN learned more steadily in my runs because replay memory and the target network made updates less noisy and sporatic. Reinforce was simpler but had higher variance, so its progress depended more on sampled episodes and could fluctuate before improving. Both final policies were much better than random, but DQN generally produced the more stable final behavior.
+\end{solution}
 
 \section*{Gifs:}
 Make sure to upload all of the .gifs zipped with your written response. There should be 5 gifs total; two for the taxi (random, q-learning), three for the cartpole (random, dqn, reinforce).
