@@ -42,7 +42,18 @@ class VAE(nn.Module):
         super(VAE, self).__init__()
 
         ## TODO: Implement __init__
-        pass
+        # encoder 
+        self.fc1 = nn.Linear(x_dim, h_dim1)     # 784 -> 512
+        self.fc2 = nn.Linear(h_dim1, h_dim2)    # 512 -> 256
+
+        # Latent space layers
+        self.fc_mu = nn.Linear(h_dim2, z_dim)       # 256 -> 32
+        self.fc_logvar = nn.Linear(h_dim2, z_dim)   # 256 -> 32
+
+        # Decoder 
+        self.fc3 = nn.Linear(z_dim, h_dim2)     # 32 -> 256
+        self.fc4 = nn.Linear(h_dim2, h_dim1)    # 256 -> 512
+        self.fc5 = nn.Linear(h_dim1, x_dim)     # 512 -> 784
 
         #################
 
